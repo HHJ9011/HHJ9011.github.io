@@ -5,10 +5,12 @@
 <title>프리미엄 동전 던지기</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ✅ Google AdSense -->
-<script async 
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7503206245117361"
-  crossorigin="anonymous"></script>
+<!-- ✅ 애드센스 메타 태그 -->
+<meta name="google-adsense-account" content="ca-pub-7503206245117361">
+
+<!-- ✅ 애드센스 스크립트 -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7503206245117361"
+crossorigin="anonymous"></script>
 
 <style>
 * { box-sizing: border-box; }
@@ -16,7 +18,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
   color: #fff;
   min-height: 100vh;
   display: flex;
@@ -26,25 +28,23 @@ body {
 
 .container {
   width: 100%;
-  max-width: 420px;
-  padding: 24px;
+  max-width: 380px;
+  padding: 25px;
   background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(15px);
   border-radius: 22px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
   text-align: center;
 }
 
-h1 {
-  margin-bottom: 10px;
-}
+h1 { margin-bottom: 15px; }
 
 .coin {
-  width: 130px;
-  height: 130px;
-  margin: 20px auto;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   background: radial-gradient(circle, gold, #b8860b);
+  margin: 20px auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,52 +59,53 @@ h1 {
 
 @keyframes spin {
   from { transform: rotateY(0deg); }
-  to { transform: rotateY(1080deg); }
+  to { transform: rotateY(1440deg); }
 }
 
 button {
-  padding: 12px 24px;
-  border-radius: 24px;
-  border: none;
+  padding: 12px 22px;
   margin: 6px;
-  background: linear-gradient(135deg, #ff9800, #ff5722);
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(135deg,#ff9800,#ff5722);
   color: white;
-  font-size: 14px;
   cursor: pointer;
 }
 
-.stats {
-  margin-top: 10px;
-  font-size: 14px;
+.stats { font-size: 14px; margin-top: 10px; }
+
+.chart { margin-top: 15px; text-align: left; font-size: 12px; }
+
+.bar {
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
 }
 
+.head { background: linear-gradient(90deg,#4caf50,#8bc34a); }
+.tail { background: linear-gradient(90deg,#2196f3,#03a9f4); }
+
 .log {
-  margin-top: 12px;
   background: rgba(0,0,0,0.3);
-  padding: 10px;
+  padding: 8px;
   border-radius: 10px;
   max-height: 120px;
   overflow-y: auto;
   font-size: 12px;
   text-align: left;
-}
-
-/* 광고 영역 */
-.ads {
-  margin: 20px 0;
-}
-
-/* 하단 안내 */
-.footer {
-  font-size: 11px;
-  opacity: 0.75;
   margin-top: 10px;
+}
+
+.ads { margin: 20px 0; }
+
+.privacy {
+  font-size: 11px;
+  opacity: 0.7;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
   <h1>🪙 동전 던지기</h1>
 
@@ -114,9 +115,18 @@ button {
   <button onclick="resetGame()">초기화</button>
 
   <div class="stats">
-    앞면: <span id="head">0</span> |
-    뒷면: <span id="tail">0</span>
+    앞면 <span id="head">0</span> |
+    뒷면 <span id="tail">0</span>
   </div>
+
+  <div class="chart">
+    앞면
+    <div class="bar head" id="headBar"></div>
+    뒷면
+    <div class="bar tail" id="tailBar"></div>
+  </div>
+
+  <div class="log" id="log">기록 없음</div>
 
   <!-- ✅ 광고 영역 -->
   <div class="ads">
@@ -131,59 +141,57 @@ button {
     </script>
   </div>
 
-  <div class="log" id="log">기록이 여기에 표시됩니다.</div>
-
-  <div class="footer">
-    본 사이트는 개인정보를 직접 수집하지 않으며  
+  <div class="privacy">
+    본 사이트는 개인 정보를 직접 수집하지 않으며<br>
     광고 제공을 위해 쿠키가 사용될 수 있습니다.
   </div>
 </div>
 
 <script>
-let head = 0;
-let tail = 0;
-let round = 0;
+let h = +localStorage.getItem("h") || 0;
+let t = +localStorage.getItem("t") || 0;
+let logs = JSON.parse(localStorage.getItem("logs")) || [];
 
-function flipCoin() {
+function flipCoin(){
   const coin = document.getElementById("coin");
   coin.classList.remove("spin");
   void coin.offsetWidth;
   coin.classList.add("spin");
 
-  setTimeout(() => {
-    round++;
-    if (Math.random() < 0.5) {
-      head++;
-      coin.textContent = "앞면";
-      log(`▶ ${round}회차: 앞면`);
-    } else {
-      tail++;
-      coin.textContent = "뒷면";
-      log(`▶ ${round}회차: 뒷면`);
-    }
+  setTimeout(()=>{
+    const r = Math.random()<0.5 ? "앞면":"뒷면";
+    coin.textContent = r;
+    if(r==="앞면") h++; else t++;
+    logs.push(r);
+    save();
     update();
-  }, 700);
+  },800);
 }
 
-function update() {
-  document.getElementById("head").textContent = head;
-  document.getElementById("tail").textContent = tail;
+function update(){
+  head.textContent=h;
+  tail.textContent=t;
+  const total=h+t||1;
+  headBar.style.width=(h/total*100)+"%";
+  tailBar.style.width=(t/total*100)+"%";
+  log.innerHTML=logs.map((v,i)=>`${i+1}회: ${v}`).join("<br>");
 }
 
-function log(text) {
-  const box = document.getElementById("log");
-  box.innerHTML += `<div>${text}</div>`;
-  box.scrollTop = box.scrollHeight;
+function save(){
+  localStorage.setItem("h",h);
+  localStorage.setItem("t",t);
+  localStorage.setItem("logs",JSON.stringify(logs));
 }
 
-function resetGame() {
-  if (!confirm("기록을 초기화할까요?")) return;
-  head = tail = round = 0;
-  document.getElementById("coin").textContent = "?";
-  document.getElementById("log").innerHTML = "기록이 여기에 표시됩니다.";
+function resetGame(){
+  if(!confirm("초기화할까요?")) return;
+  h=t=0; logs=[];
+  localStorage.clear();
+  coin.textContent="?";
   update();
 }
-</script>
 
+update();
+</script>
 </body>
 </html>
