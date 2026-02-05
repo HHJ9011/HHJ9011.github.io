@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>프리미엄 동전 던지기</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<!-- AdSense (키만 교체) -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXX"
+crossorigin="anonymous"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 380px;
+  padding: 25px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(14px);
+  border-radius: 22px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+  text-align: center;
+}
+
+h1 { margin: 10px 0 15px; }
+
+.coin {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, gold, #b8860b);
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 22px;
+  color: #333;
+}
+
+.spin { animation: spin 1s ease-in-out; }
+
+@keyframes spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(1080deg); }
+}
+
+button {
+  margin: 6px;
+  padding: 12px 22px;
+  border-radius: 25px;
+  border: none;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.stats {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.chart {
+  margin-top: 15px;
+  text-align: left;
+  font-size: 12px;
+}
+
+.bar {
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.head { background: linear-gradient(90deg, #4caf50, #8bc34a); }
+.tail { background: linear-gradient(90deg, #2196f3, #03a9f4); }
+
+.log {
+  margin-top: 10px;
+  background: rgba(0,0,0,0.3);
+  padding: 8px;
+  border-radius: 10px;
+  max-height: 110px;
+  overflow-y: auto;
+  font-size: 12px;
+  text-align: left;
+}
+
+.ads { margin: 20px 0; }
+
+.privacy {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🪙 동전 던지기</h1>
+
+  <div class="coin" id="coin">?</div>
+
+  <button onclick="flipCoin()">동전 던지기</button>
+  <button onclick="resetGame()">초기화</button>
+
+  <div class="stats">
+    앞면: <span id="headCount">0</span> |
+    뒷면: <span id="tailCount">0</span>
+  </div>
+
+  <!-- 확률 그래프 -->
+  <div class="chart">
+    앞면 비율
+    <div class="bar head" id="headBar" style="width:0%"></div>
+    뒷면 비율
+    <div class="bar tail" id="tailBar" style="width:0%"></div>
+  </div>
+
+  <!-- 기록 -->
+  <div class="log" id="log">기록이 여기에 표시됩니다.</div>
+
+  <!-- 광고 -->
+  <div class="ads">
+    <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-XXXXXXXXXXXXXXX"
+      data-ad-slot="1234567890"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+
+  <div class="privacy">
+    본 사이트는 개인 정보를 직접 수집하지 않으며
+    광고 제공을 위해 쿠키가 사용될 수 있습니다.
+  </div>
+</div>
+
+<script>
+let head = Number(localStorage.getItem("head")) || 0;
+let tail = Number(localStorage.getItem("tail")) || 0;
+let round = Number(localStorage.getItem("round")) || 0;
+let logs = JSON.parse(localStorage.getItem("logs")) || [];
+
+updateUI();
+
+// 🔊 동전 소리
+function playSound() {
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 600;
+  gain.gain.value = 0.15;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.1);
+}
+
+function flipCoin() {
+  const coin = document.getElementById("coin");
+  coin.classList.remove("spin");
+  void coin.offsetWidth;
+  coin.classList.add("spin");
+  playSound();
+
+  setTimeout(() => {
+    const isHead = Math.random() < 0.5;
+    round++;
+
+    if (isHead) {
+      head++;
+      coin.textContent = "앞면";
+      logs.push(`${round}회차: 앞면`);
+    } else {
+      tail++;
+      coin.textContent = "뒷면";
+      logs.push(`${round}회차: 뒷면`);
+    }
+
+    save();
+    updateUI();
+  }, 800);
+}
+
+function updateUI() {
+  document.getElementById("headCount").textContent = head;
+  document.getElementById("tailCount").textContent = tail;
+
+  const total = head + tail;
+  const headRate = total ? (head / total) * 100 : 0;
+  const tailRate = total ? (tail / total) * 100 : 0;
+
+  document.getElementById("headBar").style.width = headRate + "%";
+  document.getElementById("tailBar").style.width = tailRate + "%";
+
+  const log = document.getElementById("log");
+  log.innerHTML = logs.length ? logs.map(l => `<div>${l}</div>`).join("") : "기록이 여기에 표시됩니다.";
+  log.scrollTop = log.scrollHeight;
+}
+
+function save() {
+  localStorage.setItem("head", head);
+  localStorage.setItem("tail", tail);
+  localStorage.setItem("round", round);
+  localStorage.setItem("logs", JSON.stringify(logs));
+}
+
+function resetGame() {
+  if (!confirm("기록을 초기화할까요?")) return;
+  head = tail = round = 0;
+  logs = [];
+  localStorage.clear();
+  document.getElementById("coin").textContent = "?";
+  updateUI();
+}
+</script>
+
+</body>
+</html>
